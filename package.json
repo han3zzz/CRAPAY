@@ -19,8 +19,7 @@
   "name": "crapay",
   "version": "1.0.0",
   "scripts": {
-    "dev": "npx concurrently \"npm run dev:front\" \"npm run dev:back\"",
-    "dev:front": "cd crapay && npm run build",
+    "dev": "npx concurrently \"npm run dev:back\"",
     "dev:back": "tsx ./public/server.ts"
   },
   "keywords": [],
