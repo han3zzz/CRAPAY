@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRAPAY - Fast payments anytime, anywhere.</title>
+   <link rel="icon" href="./public/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"> 
+  <link rel="stylesheet" href="./src/style.css">
+  <script src="https://kit.fontawesome.com/36cdc549b2.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script type="module" src="./src/main.ts"></script>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+
+  <div class="sidebar">
+  
+
+    <div class="logo">
+      CRA<span>PAY</span>
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn"> <i class="fa-solid fa-bars"></i> </button>
+
+   <div class="menu">
+    <button class="menu-btn active" data-page="home">
+    <i class="fa-solid fa-house"></i> Home
+  </button>
+  <button
+    class="menu-btn"
+    data-page="send"
+  >
+    <i class="fa-solid fa-paper-plane"></i> Send Payment
+  </button>
+    <button
+    class="menu-btn"
+    data-page="qrpay"
+  >
+    <i class="fa-solid fa-qrcode"></i> QRCODE Payment
+  </button>
+    <button
+    class="menu-btn"
+    data-page="scanqr"
+  >
+    <i class="fa-solid fa-expand"></i> Scan QRCODE
+  </button>
+    <button
+    class="menu-btn"
+    data-page="swap"
+  >
+    <i class="fa-solid fa-arrow-right-arrow-left"></i> Swap Token
+  </button>
+  <button
+    class="menu-btn"
+    data-page="transactions"
+  >
+    <i class="fa-solid fa-clock-rotate-left"></i> Transactions History
+  </button>
+
+</div>
+
+  </div>
+
+  <!-- MAIN -->
+
+  <div class="main">
+
+    <div class="topbar">
+      
+      <div>
+        <h1>Welcome back 👋</h1>
+        <p>Manage your crypto payments easily</p>
+        <p>You can faucet testnet at <a href="https://faucet.circle.com/">https://faucet.circle.com/</a></p>
+      </div>
+       
+            <button
+        id="loginBtn"
+        class="wallet-btn"
+      >
+        Connect Wallet
+      </button>
+
+      <button
+        id="walletBtn"
+        class="wallet-btn connected"
+        style="display:none;"
+      >
+</button>
+
+    </div>
+
+    <!-- CARDS -->
+<div class="page active-page " id="homePage">
+  <!-- <button
+        class="wallet-btn"
+        style="margin-top: 20px;"
+      >
+       🔴 ARC TESTNET
+      </button> -->
+    <div class="cards ">
+       
+      <div class="card balance-card">
+        <p>Total USDC</p>
+        <h2 id="balanceusdc">0</h2>
+        <p style="margin-top:40px;">
+          Arc Network
+        </p>
+      </div>
+
+      <div class="card balance-card">
+        <p>Total EURC</p>
+        <h2 id="balanceeurc">0</h2>
+         <p style="margin-top:40px;">
+          Arc Network
+        </p>
+      </div>
+
+      <div class="card balance-card">
+        <p>Total Transactions on CRAPAY</p>
+        <h2 id="totalTrans">0</h2>
+      </div>
+
+    </div>
+
+
+
+
+<!-- HOW IT WORK -->
+<div class="how">
+
+  <div class="how-header">
+    <h2>How CRAPAY Works</h2>
+    <p>
+      Fast crypto payments powered by Arc Testnet.
+      Send, receive, and scan payments in seconds.
+    </p>
+  </div>
+
+  <div class="how-grid">
+
+    <!-- CARD 2 -->
+    <div class="how-card">
+      <div class="how-icon">
+        <i class="fa-solid fa-paper-plane"></i>
+      </div>
+
+      <h3>Send Payments</h3>
+
+      <p>
+        Transfer USDC or EURC to any wallet address
+        with a smooth and lightning-fast experience.
+      </p>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="how-card">
+      <div class="how-icon">
+        <i class="fa-solid fa-qrcode"></i>
+      </div>
+
+      <h3>Create QR Payment</h3>
+
+      <p>
+        Generate beautiful payment QR codes instantly
+        for quick and seamless crypto transactions.
+      </p>
+    </div>
+
+    <!-- CARD 4 -->
+    <div class="how-card">
+      <div class="how-icon">
+        <i class="fa-solid fa-camera"></i>
+      </div>
+
+      <h3>Scan & Pay</h3>
+
+      <p>
+        Scan payment QR codes directly using camera
+        or image upload and complete payments easily.
+      </p>
+    </div>
+
+    <!-- CARD 5 -->
+    <div class="how-card">
+      <div class="how-icon">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+
+      <h3>Secure Transactions</h3>
+
+      <p>
+        Every transaction is validated and processed
+        securely on Arc Testnet infrastructure.
+      </p>
+    </div>
+
+
+  </div>
+
+</div>
+</div>
+
+        <!-- SEND PAYMENT -->
+
+   <div class="content-area">
+
+  <!-- SEND PAGE -->
+  <div
+    class="page active-page"
+    id="sendPage"
+  >
+
+    <div class="send-box confirm-box">
+
+      <h2>Send Payment</h2>
+      <div class="token-select">
+  <div class="token active" data-token="USDC">
+   <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 120 120" class="cb-icon cb-icon-usdc pointer-events-none" aria-hidden="true" data-testid="icon-usdc" focusable="false" role="img"><path fill="#0B53BF" d="M60 120c33.137 0 60-26.863 60-60S93.137 0 60 0 0 26.863 0 60s26.863 60 60 60"></path><path fill="#fff" d="M70.8 16.313v7.725C86.211 28.688 97.498 43.013 97.498 60s-11.287 31.313-26.7 35.963v7.725C90.45 98.888 105 81.15 105 60s-14.55-38.887-34.2-43.687M22.499 60c0-16.987 11.287-31.312 26.7-35.962v-7.725c-19.65 4.8-34.2 22.537-34.2 43.687s14.55 38.888 34.2 43.688v-7.725C33.786 91.35 22.499 76.988 22.499 60"></path><path fill="#fff" d="M76.124 68.363c0-15.338-24.037-9.038-24.037-17.513 0-3.037 2.437-4.987 7.087-4.987 5.55 0 7.463 2.7 8.063 6.337h7.65c-.683-6.826-4.6-11.137-11.138-12.42v-6.03h-7.5v5.814c-7.161.912-11.662 5.083-11.662 11.286 0 15.413 24.075 9.638 24.075 17.963 0 3.15-3.038 5.25-8.176 5.25-6.712 0-8.924-2.963-9.75-7.05h-7.462c.483 7.477 5.094 12.157 12.975 13.324v5.913h7.5v-5.834c7.692-.994 12.375-5.468 12.375-12.053"></path></svg>
+    USDC
+  </div>
+
+  <div class="token" data-token="EURC">
+    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 120 120" class="cb-icon cb-icon-eurc pointer-events-none" aria-hidden="true" data-testid="icon-eurc" focusable="false" role="img"><path fill="#0B53BF" d="M60 120c33.137 0 60-26.863 60-60S93.137 0 60 0 0 26.863 0 60s26.863 60 60 60"></path><path fill="#fff" stroke="#0B53BF" stroke-miterlimit="10" stroke-width="0.035" d="M72.749 74.287c-2.625 1.05-5.475 1.65-8.212 1.65-5.422 0-10.533-2.308-12.976-7.875h11.926l2.324-5.624H50.174A26 26 0 0 1 50.062 60q0-1.275.112-2.438h17.625l2.325-5.625H51.562c2.442-5.566 7.553-7.875 12.975-7.875 2.737 0 5.587.6 8.212 1.65l2.4-5.7c-3.225-1.687-6.862-2.512-10.5-2.512-8.78 0-17.654 4.908-20.867 14.437h-5.758v5.625h4.605a28 28 0 0 0 0 4.876h-4.605v5.624h5.758C46.995 77.592 55.87 82.5 64.65 82.5c3.638 0 7.275-.825 10.5-2.513z"></path><path fill="#fff" stroke="#0B53BF" stroke-miterlimit="10" stroke-width="0.035" d="M22.499 60c0-16.988 11.287-31.313 26.7-35.963v-7.725c-19.65 4.8-34.2 22.538-34.2 43.688s14.55 38.887 34.2 43.687v-7.725C33.786 91.35 22.499 76.987 22.499 60ZM70.799 16.312v7.725c15.412 4.65 26.7 18.975 26.7 35.963 0 16.987-11.287 31.312-26.7 35.962v7.725c19.65-4.8 34.2-22.537 34.2-43.687s-14.55-38.888-34.2-43.688Z"></path></svg>
+    EURC
+  </div>
+</div>
+  
+      <div class="inputs">
+        <input
+          type="text"
+          placeholder="Receiver Wallet Address"
+          id="addressSend"
+        >
+
+        <input
+          type="number"
+          placeholder="Amount"
+          id="amountSend"
+        >
+
+      </div>
+
+      <textarea
+        placeholder="Add a message..."
+        id="messageSend"
+      ></textarea>
+
+      <button class="send-btn" onclick="sendPayment()">
+        Send Payment
+      </button>
+
+    </div>
+
+  </div>
+
+    <!-- QR PAY PAGE -->
+  <div
+    class="page active-page"
+    id="qrpayPage"
+  >
+
+    <div class="send-box confirm-box">
+
+      <h2>Create QRCODE Payment</h2>
+      <div class="token-select">
+  <div class="token active" data-token="USDC">
+   <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 120 120" class="cb-icon cb-icon-usdc pointer-events-none" aria-hidden="true" data-testid="icon-usdc" focusable="false" role="img"><path fill="#0B53BF" d="M60 120c33.137 0 60-26.863 60-60S93.137 0 60 0 0 26.863 0 60s26.863 60 60 60"></path><path fill="#fff" d="M70.8 16.313v7.725C86.211 28.688 97.498 43.013 97.498 60s-11.287 31.313-26.7 35.963v7.725C90.45 98.888 105 81.15 105 60s-14.55-38.887-34.2-43.687M22.499 60c0-16.987 11.287-31.312 26.7-35.962v-7.725c-19.65 4.8-34.2 22.537-34.2 43.687s14.55 38.888 34.2 43.688v-7.725C33.786 91.35 22.499 76.988 22.499 60"></path><path fill="#fff" d="M76.124 68.363c0-15.338-24.037-9.038-24.037-17.513 0-3.037 2.437-4.987 7.087-4.987 5.55 0 7.463 2.7 8.063 6.337h7.65c-.683-6.826-4.6-11.137-11.138-12.42v-6.03h-7.5v5.814c-7.161.912-11.662 5.083-11.662 11.286 0 15.413 24.075 9.638 24.075 17.963 0 3.15-3.038 5.25-8.176 5.25-6.712 0-8.924-2.963-9.75-7.05h-7.462c.483 7.477 5.094 12.157 12.975 13.324v5.913h7.5v-5.834c7.692-.994 12.375-5.468 12.375-12.053"></path></svg>
+    USDC
+  </div>
+
+  <div class="token" data-token="EURC">
+    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 120 120" class="cb-icon cb-icon-eurc pointer-events-none" aria-hidden="true" data-testid="icon-eurc" focusable="false" role="img"><path fill="#0B53BF" d="M60 120c33.137 0 60-26.863 60-60S93.137 0 60 0 0 26.863 0 60s26.863 60 60 60"></path><path fill="#fff" stroke="#0B53BF" stroke-miterlimit="10" stroke-width="0.035" d="M72.749 74.287c-2.625 1.05-5.475 1.65-8.212 1.65-5.422 0-10.533-2.308-12.976-7.875h11.926l2.324-5.624H50.174A26 26 0 0 1 50.062 60q0-1.275.112-2.438h17.625l2.325-5.625H51.562c2.442-5.566 7.553-7.875 12.975-7.875 2.737 0 5.587.6 8.212 1.65l2.4-5.7c-3.225-1.687-6.862-2.512-10.5-2.512-8.78 0-17.654 4.908-20.867 14.437h-5.758v5.625h4.605a28 28 0 0 0 0 4.876h-4.605v5.624h5.758C46.995 77.592 55.87 82.5 64.65 82.5c3.638 0 7.275-.825 10.5-2.513z"></path><path fill="#fff" stroke="#0B53BF" stroke-miterlimit="10" stroke-width="0.035" d="M22.499 60c0-16.988 11.287-31.313 26.7-35.963v-7.725c-19.65 4.8-34.2 22.538-34.2 43.688s14.55 38.887 34.2 43.687v-7.725C33.786 91.35 22.499 76.987 22.499 60ZM70.799 16.312v7.725c15.412 4.65 26.7 18.975 26.7 35.963 0 16.987-11.287 31.312-26.7 35.962v7.725c19.65-4.8 34.2-22.537 34.2-43.687s-14.55-38.888-34.2-43.688Z"></path></svg>
+    EURC
+  </div>
+</div>
+  
+      <div class="inputs">
+        <input
+          type="text"
+          placeholder="Receiver Wallet Address"
+          id="qraddess"
+        >
+
+        <input
+          type="number"
+          placeholder="Amount"
+          id="qrnumber"
+        >
+
+      </div>
+
+      <textarea
+        placeholder="Add a message..."
+        id="qrmessage"
+      ></textarea>
+
+      <button class="send-btn" onclick="generateQR()">
+        Create QR
+      </button>
+
+    </div>
+
+  </div>
+
+<!-- SWAP PAGE -->
+<div class="page active-page" id="swapPage">
+
+  <div class="confirm-box">
+
+    <h2>SWAP TOKEN</h2>
+
+    <!-- FROM -->
+    <div class="swap-token-box">
+
+      <div class="swap-top">
+        <p class="swap-label">From</p>
+       
+      </div>
+
+      <div class="swap-token" id="fromToken" data-token="USDC">
+        <div class="swap-left">
+
+          <!-- ICON -->
+          <div class="swap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 120 120" class="cb-icon cb-icon-usdc pointer-events-none" aria-hidden="true" data-testid="icon-usdc" focusable="false" role="img"><path fill="#0B53BF" d="M60 120c33.137 0 60-26.863 60-60S93.137 0 60 0 0 26.863 0 60s26.863 60 60 60"></path><path fill="#fff" d="M70.8 16.313v7.725C86.211 28.688 97.498 43.013 97.498 60s-11.287 31.313-26.7 35.963v7.725C90.45 98.888 105 81.15 105 60s-14.55-38.887-34.2-43.687M22.499 60c0-16.987 11.287-31.312 26.7-35.962v-7.725c-19.65 4.8-34.2 22.537-34.2 43.687s14.55 38.888 34.2 43.688v-7.725C33.786 91.35 22.499 76.988 22.499 60"></path><path fill="#fff" d="M76.124 68.363c0-15.338-24.037-9.038-24.037-17.513 0-3.037 2.437-4.987 7.087-4.987 5.55 0 7.463 2.7 8.063 6.337h7.65c-.683-6.826-4.6-11.137-11.138-12.42v-6.03h-7.5v5.814c-7.161.912-11.662 5.083-11.662 11.286 0 15.413 24.075 9.638 24.075 17.963 0 3.15-3.038 5.25-8.176 5.25-6.712 0-8.924-2.963-9.75-7.05h-7.462c.483 7.477 5.094 12.157 12.975 13.324v5.913h7.5v-5.834c7.692-.994 12.375-5.468 12.375-12.053"></path></svg>
+   
+          </div>
+
+          <div>
+            <h3 id="fromName">USDC</h3>
+            <span id="usdcswap">Balance: 99 EURC</span>
+          </div>
+
+        </div>
+
+        <!-- INPUT -->
+        <input
+          type="number"
+          placeholder="0.00"
+          class="swap-input"
+          id="fromAmount"
+        >
+
+      </div>
+
+    </div>
+
+    <!-- SWAP BUTTON -->
+    <div class="swap-center">
+      <button class="swap-switch" id="swapSwitch">
+        <i class="fa-solid fa-arrows-up-down"></i>
+      </button>
+    </div>
+
+    <!-- TO -->
+    <div class="swap-token-box">
+
+      <div class="swap-top">
+        <p class="swap-label">To</p>
+        
+      </div>
+
+      <div class="swap-token" id="toToken" data-token="EURC">
+        <div class="swap-left">
+
+          <!-- ICON -->
+          <div class="swap-icon">
+           <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 120 120" class="cb-icon cb-icon-eurc pointer-events-none" aria-hidden="true" data-testid="icon-eurc" focusable="false" role="img"><path fill="#0B53BF" d="M60 120c33.137 0 60-26.863 60-60S93.137 0 60 0 0 26.863 0 60s26.863 60 60 60"></path><path fill="#fff" stroke="#0B53BF" stroke-miterlimit="10" stroke-width="0.035" d="M72.749 74.287c-2.625 1.05-5.475 1.65-8.212 1.65-5.422 0-10.533-2.308-12.976-7.875h11.926l2.324-5.624H50.174A26 26 0 0 1 50.062 60q0-1.275.112-2.438h17.625l2.325-5.625H51.562c2.442-5.566 7.553-7.875 12.975-7.875 2.737 0 5.587.6 8.212 1.65l2.4-5.7c-3.225-1.687-6.862-2.512-10.5-2.512-8.78 0-17.654 4.908-20.867 14.437h-5.758v5.625h4.605a28 28 0 0 0 0 4.876h-4.605v5.624h5.758C46.995 77.592 55.87 82.5 64.65 82.5c3.638 0 7.275-.825 10.5-2.513z"></path><path fill="#fff" stroke="#0B53BF" stroke-miterlimit="10" stroke-width="0.035" d="M22.499 60c0-16.988 11.287-31.313 26.7-35.963v-7.725c-19.65 4.8-34.2 22.538-34.2 43.688s14.55 38.887 34.2 43.687v-7.725C33.786 91.35 22.499 76.987 22.499 60ZM70.799 16.312v7.725c15.412 4.65 26.7 18.975 26.7 35.963 0 16.987-11.287 31.312-26.7 35.962v7.725c19.65-4.8 34.2-22.537 34.2-43.687s-14.55-38.888-34.2-43.688Z"></path></svg>
+   
+          </div>
+
+          <div>
+            <h3 id="toName">EURC</h3>
+            <span id="eurcswap">Balance: 50 EURC</span>
+          </div>
+
+        </div>
+
+        <!-- INPUT -->
+        <input
+          type="number"
+          placeholder="0.00"
+          class="swap-input"
+          id="toAmount"
+      
+        >
+
+      </div>
+
+    </div>
+
+    <button class="send-btn" style="margin-top:25px;" onclick="swapToken()">
+      Swap Now
+    </button>
+
+  </div>
+
+</div>
+
+
+   <!-- Transactions history PAGE -->
+<div class="page active-page" id="tranhistoryPage">
+
+  <div class="transactions confirm-box">
+
+      <h2 style="margin-bottom:20px;">
+        Transactions History
+      </h2>
+
+    
+
+    </div>
+
+</div>
+
+   <!-- COMFIRM PAGE -->
+<div class="page active-page" id="comfirmPage">
+
+  <div class="confirm-box">
+    <h2>Confirm Payment</h2>
+
+    <div class="confirm-item amount-row">
+      <span>Amount</span>
+
+      <div class="amount-value">
+        <b id="amountComfirm"></b>
+        <span id="symbolIcon"></span>
+      </div>
+    </div>
+
+    <div class="confirm-item">
+      <span>To</span>
+      <b id="toComfirm"></b>
+    </div>
+
+    <div class="confirm-item">
+      <span>Message</span>
+      <b id="messageComfirm"></b>
+    </div>
+
+    <div class="confirm-item">
+      <span>Network</span>
+      <b>ARC TESTNET</b>
+    </div>
+
+    <button class="send-btn confirm-btn" id="payBtn" onclick="pay()">
+      Payment
+    </button>
+     <button class="send-btn confirm-btn" id="payBtnQR" onclick="pay1()" hidden>
+      Payment
+    </button>
+
+  </div>
+
+</div>
+<!-- SUCCSESS PAGE -->
+<div class="page active-page" id="successPage">
+
+  <div class="confirm-box">
+    <h2>Payment Success</h2>
+    <div class="confirm-item amount-row">
+      <span>txHash</span>
+
+      <div>
+        <b id="txHashSuccess"></b>
+        <span id="symbolIcon"></span>
+      </div>
+    </div>
+    <div class="confirm-item amount-row">
+      <span>Amount</span>
+
+      <div >
+        <b id="amountSuccess"></b>
+        <span id="symbolIcon"></span>
+      </div>
+    </div>
+
+    <div class="confirm-item">
+      <span>To</span>
+      <b id="toSuccess"></b>
+    </div>
+
+    <div class="confirm-item">
+      <span>Message</span>
+      <b id="messageSuccess"></b>
+    </div>
+
+    <div class="confirm-item">
+      <span>Network</span>
+      <b>ARC TESTNET</b>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- INFO TRANSACTIONS PAGE -->
+<div class="page active-page" id="infotranPage">
+
+  <div class="confirm-box">
+    <h2>Infomation Transactions</h2>
+    <div class="confirm-item amount-row">
+      <span>txHash</span>
+
+      <div>
+        <b id="txHashInfo"></b>
+        <span id="symbolIcon"></span>
+      </div>
+    </div>
+    <div class="confirm-item amount-row">
+      <span>Amount</span>
+
+      <div >
+        <b id="amountInfo"></b>
+        <span id="symbolIcon"></span>
+      </div>
+    </div>
+      <div class="confirm-item amount-row">
+      <span>Type</span>
+
+      <div >
+        <b id="typeInfo"></b>
+        <span id="symbolIcon"></span>
+      </div>
+    </div>
+     <div class="confirm-item">
+      <span>From</span>
+      <b id="fromInfo"></b>
+    </div>
+    <div class="confirm-item">
+      <span>To</span>
+      <b id="toInfo"></b>
+    </div>
+
+    <div class="confirm-item">
+      <span>Message</span>
+      <b id="messageInfo"></b>
+    </div>
+    <div class="confirm-item">
+      <span>Time</span>
+      <b id="timeInfo"></b>
+    </div>
+
+    <div class="confirm-item">
+      <span>Network</span>
+      <b>ARC TESTNET</b>
+    </div>
+
+  </div>
+
+</div>
+   
+   <!-- SCAN QR PAY PAGE -->
+  <div
+    class="page active-page"
+    id="scanqrPage"
+  >
+
+    <div class="send-box confirm-box">
+
+      <h2>Scan QRCODE</h2>
+
+ <div class="scan-select">
+
+  <div class="scan-option active" id="scanImage">
+    Scan with Image
+  </div>
+  <div class="scan-option" id="scanCamera">
+     Scan with Camera
+  </div>
+
+
+</div>
+<!-- IMAGE UPLOAD AREA -->
+<div id="imageBox" style="display:none;">
+  <input type="file" id="qrFile" accept="image/*" />
+</div>
+
+<div id="result"></div>
+
+<!-- CAMERA AREA -->
+<div id="cameraBox">
+  <div id="reader" class="camera-reader">
+    <div class="scan-frame">
+  <div class="scan-corner tl"></div>
+  <div class="scan-corner tr"></div>
+  <div class="scan-corner bl"></div>
+  <div class="scan-corner br"></div>
+
+  <div class="scan-line"></div>
+  </div>
+</div>
+
+
+    </div>
+
+  </div>
+
+  <!-- TRANSACTION PAGE -->
+  <div
+    class="page"
+    id="transactionPage"
+  >
+
+    <div class="transactions">
+
+      <h2 style="margin-bottom:20px;">
+        Recent Transactions
+      </h2>
+
+      <div class="tx">
+
+        <div class="tx-info">
+          <h3>Payment Sent</h3>
+          <p>"Thanks for helping 🔥"</p>
+        </div>
+
+        <div class="amount">
+          -25 USDC
+        </div>
+
+      </div>
+
+      <div class="tx">
+
+        <div class="tx-info">
+          <h3>Payment Received</h3>
+          <p>"UI Design Payment"</p>
+        </div>
+
+        <div class="amount">
+          +80 USDC
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+  
+
+
+</div>
+<footer class="copyright">
+  <p>Build on ARC Testnet | 
+    © 2026 CRAPAY. All rights reserved. 
+  </p>
+</footer>
+
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.1/dist/ethers.umd.min.js"></script>
+    <script type="module" src="./src/app.ts"></script>
+      <script type="module" src="./src/style.ts"></script>
+
+</body>
+</html>
