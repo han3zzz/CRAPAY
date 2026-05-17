@@ -33,7 +33,11 @@ app.get("/", (req, res) => {
   )
 
 })
+app.get("/ping", (req, res) => {
 
+  console.log("pingg")
+
+})
 // NONCE
 app.post("/nonce", (req, res) => {
 
