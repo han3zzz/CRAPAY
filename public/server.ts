@@ -137,59 +137,57 @@ async function checkAndRunSchedules(): Promise<void> {
   console.log("[Scheduler] Checking due schedules…")
 
   try {
-    const usersSnap = await adminDb.collection("users").listDocuments()
+    // collectionGroup — không dùng listDocuments (không support free tier)
+    const schedulesSnap = await adminDb
+      .collectionGroup("schedules")
+      .where("active",    "==", true)
+      .where("nextRunAt", "<=", now)
+      .get()
 
-    for (const userRef of usersSnap) {
-      const schedulesSnap = await adminDb
-        .collection("users").doc(userRef.id)
-        .collection("schedules")
-        .where("active",    "==", true)
-        .where("nextRunAt", "<=", now)
-        .get()
+    if (schedulesSnap.empty) {
+      console.log("[Scheduler] No due schedules")
+      return
+    }
 
-      if (schedulesSnap.empty) continue
+    for (const schedDoc of schedulesSnap.docs) {
+      const sched = schedDoc.data()
+      if (sched._running) continue
 
-      for (const schedDoc of schedulesSnap.docs) {
-        const sched = schedDoc.data()
+      const ownerAddress = sched.ownerAddress as string
+      // Lấy userRef từ path: users/{address}/schedules/{id}
+      const userRef = schedDoc.ref.parent.parent!
 
-        // Bỏ qua nếu đang có job khác chạy (tránh double-run)
-        if (sched._running) continue
+      await schedDoc.ref.update({ _running: true, _runStartedAt: now })
 
-        const ownerAddress = sched.ownerAddress as string
-        await schedDoc.ref.update({ _running: true, _runStartedAt: now })
+      try {
+        const txHash = await runScheduleJob(sched, ownerAddress)
+        const ts = Date.now()
+        const isOnce = sched.freq === "once"
 
-        try {
-          const txHash = await runScheduleJob(sched, ownerAddress)
-          const ts = Date.now()
-          const isOnce = sched.freq === "once"
+        await schedDoc.ref.update({
+          lastRunAt:  ts,
+          lastTxHash: txHash,
+          active:     !isOnce,
+          nextRunAt:  isOnce ? sched.nextRunAt : nextRunTime(sched.freq, ts),
+          _running:   false,
+          updatedAt:  ts,
+        })
 
-          await schedDoc.ref.update({
-            lastRunAt:  ts,
-            lastTxHash: txHash,
-            active:     !isOnce,
-            nextRunAt:  isOnce ? sched.nextRunAt : nextRunTime(sched.freq, ts),
-            _running:   false,
-            updatedAt:  ts,
-          })
+        await userRef.collection("notifications").add({
+          text: `⚡ Scheduled: sent ${sched.amount} ${sched.token ?? "USDC"} to ${String(sched.to).slice(0,6)}…${String(sched.to).slice(-4)}`,
+          time: ts,
+          read: false,
+          ownerAddress,
+        })
 
-          // Push notification cho user
-          await adminDb
-            .collection("users").doc(userRef.id)
-            .collection("notifications")
-            .add({
-              text: `⚡ Scheduled: sent ${sched.amount} ${sched.token ?? "USDC"} to ${String(sched.to).slice(0,6)}…${String(sched.to).slice(-4)}`,
-              time: ts,
-              read: false,
-              ownerAddress,
-            })
-        } catch (err: any) {
-          console.error(`[Scheduler] ❌ ${schedDoc.id}:`, err.message)
-          await schedDoc.ref.update({
-            _running:   false,
-            _lastError: err.message,
-            updatedAt:  Date.now(),
-          })
-        }
+        console.log("[Scheduler] ✅ " + schedDoc.id + " done")
+      } catch (err: any) {
+        console.error("[Scheduler] ❌ " + schedDoc.id + ":", err.message)
+        await schedDoc.ref.update({
+          _running:   false,
+          _lastError: err.message,
+          updatedAt:  Date.now(),
+        })
       }
     }
   } catch (err: any) {
