@@ -22,17 +22,9 @@ const ARC_RPC          = "https://rpc.testnet.arc.network"
 const AGENTIC_CONTRACT = "0x0747EEf0706327138c69792bF28Cd525089e4583"
 const USDC_CONTRACT    = "0x3600000000000000000000000000000000000000"
 
-const AGENTIC_ABI = [
-  "function createJob(address provider, address evaluator, uint256 expiredAt, string description, address hook) returns (uint256 jobId)",
-  "function setBudget(uint256 jobId, uint256 amount, bytes optParams)",
-  "function fund(uint256 jobId, bytes optParams)",
-  "function submit(uint256 jobId, bytes32 deliverable, bytes optParams)",
-  "function complete(uint256 jobId, bytes32 reason, bytes optParams)",
-  "event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, address evaluator, uint256 expiredAt, address hook)",
-]
-
 const ERC20_ABI = [
   "function allowance(address owner, address spender) view returns (uint256)",
+  "function transferFrom(address from, address to, uint256 amount) returns (bool)",
 ]
 
 // ── Relayer wallet ─────────────────────────────────────────
@@ -49,76 +41,27 @@ if (relayerWallet) {
   console.warn("[Relayer] RELAYER_PRIVATE_KEY not set — scheduler disabled")
 }
 
-// ── Helper: extract jobId từ receipt ──────────────────────
-async function extractJobId(txHash: string): Promise<bigint> {
-  const receipt = await rpcProvider.getTransactionReceipt(txHash)
-  if (!receipt) throw new Error("Receipt not found: " + txHash)
-  const iface = new ethers.Interface(AGENTIC_ABI)
-  for (const log of receipt.logs) {
-    try {
-      const parsed = iface.parseLog({ topics: [...log.topics], data: log.data })
-      if (parsed?.name === "JobCreated") return parsed.args.jobId as bigint
-    } catch { continue }
-  }
-  throw new Error("JobCreated event not found in tx: " + txHash)
-}
-
-// ── Core: chạy full agentic lifecycle cho 1 schedule ──────
-// Relayer là evaluator — tự gọi complete() sau khi fund xong
-// USDC được pull từ ví user thông qua allowance đã approve trước
+// ── Core: transferFrom USDC từ ví user sang recipient ────
+// User approve relayer address (RELAYER_ADDRESS) khi tạo schedule
+// Relayer gọi transferFrom → pull USDC thẳng, không qua escrow
 async function runScheduleJob(sched: any, ownerAddress: string): Promise<string> {
   if (!relayerWallet) throw new Error("Relayer wallet not configured")
 
-  const agentic = new ethers.Contract(AGENTIC_CONTRACT, AGENTIC_ABI, relayerWallet)
-  const usdc    = new ethers.Contract(USDC_CONTRACT, ERC20_ABI, rpcProvider)
-
-  // Kiểm tra user đã approve chưa
-  const allowance: bigint = await usdc.allowance(ownerAddress, AGENTIC_CONTRACT)
+  const usdc = new ethers.Contract(USDC_CONTRACT, ERC20_ABI, relayerWallet)
   const needed = ethers.parseUnits(String(sched.amount), 6)
+
+  // Kiểm tra allowance
+  const allowance: bigint = await usdc.allowance(ownerAddress, relayerWallet.address)
   if (allowance < needed) {
-    throw new Error(`User has not approved AgenticCommerce (allowance insufficient)`)
+    throw new Error(`User has not approved relayer (allowance insufficient). Need approve for ${relayerWallet.address}`)
   }
 
-  const block = await rpcProvider.getBlock("latest")
-  if (!block) throw new Error("Cannot fetch latest block")
-  const expiredAt = BigInt(block.timestamp) + BigInt(86400)
+  // transferFrom: pull USDC từ user → recipient
+  const tx = await usdc.transferFrom(ownerAddress, sched.to, needed)
+  await tx.wait()
 
-  const description = sched.msg
-    ? `${sched.msg} — Scheduled`
-    : `Scheduled payment via CRAPAY`
-
-  // Step 1: createJob
-  // client = ownerAddress (user), provider = recipient, evaluator = relayer
-  const createTx = await agentic.createJob(
-    sched.to,               // provider = người nhận tiền
-    relayerWallet.address,  // evaluator = relayer (sẽ tự gọi complete)
-    expiredAt,
-    description,
-    "0x0000000000000000000000000000000000000000"
-  )
-  await createTx.wait()
-  const jobId = await extractJobId(createTx.hash)
-  console.log(`[Scheduler] Job #${jobId} created`)
-
-  // Step 2: setBudget
-  await (await agentic.setBudget(jobId, needed, "0x")).wait()
-
-  // Step 3: fund — contract pull USDC từ ví user (nhờ allowance)
-  await (await agentic.fund(jobId, "0x")).wait()
-
-  // Step 4: submit deliverable
-  const deliverable = ethers.keccak256(
-    ethers.toUtf8Bytes(`crapay-${jobId}-${description}-${Date.now()}`)
-  )
-  await (await agentic.submit(jobId, deliverable, "0x")).wait()
-
-  // Step 5: complete → USDC released to provider (recipient)
-  const reason = ethers.keccak256(ethers.toUtf8Bytes(`approved-${Date.now()}`))
-  const completeTx = await agentic.complete(jobId, reason, "0x")
-  await completeTx.wait()
-
-  console.log(`[Scheduler] ✅ Job #${jobId} | ${sched.amount} USDC → ${sched.to} | tx: ${completeTx.hash}`)
-  return completeTx.hash
+  console.log(`[Scheduler] ✅ ${sched.amount} USDC ${ownerAddress.slice(0,6)}… → ${sched.to.slice(0,6)}… | tx: ${tx.hash}`)
+  return tx.hash
 }
 
 // ── nextRunTime ────────────────────────────────────────────
@@ -151,13 +94,14 @@ async function checkAndRunSchedules(): Promise<void> {
 
     for (const schedDoc of schedulesSnap.docs) {
       const sched = schedDoc.data()
-      if (sched._running) continue
+      // Skip nếu đang chạy trong memory (tránh double-submit)
+      if (jobsInProgress.has(schedDoc.id)) continue
 
       const ownerAddress = sched.ownerAddress as string
       // Lấy userRef từ path: users/{address}/schedules/{id}
       const userRef = schedDoc.ref.parent.parent!
 
-      await schedDoc.ref.update({ _running: true, _runStartedAt: now })
+      jobsInProgress.add(schedDoc.id)
 
       try {
         const txHash = await runScheduleJob(sched, ownerAddress)
@@ -180,11 +124,12 @@ async function checkAndRunSchedules(): Promise<void> {
           ownerAddress,
         })
 
+        jobsInProgress.delete(schedDoc.id)
         console.log("[Scheduler] ✅ " + schedDoc.id + " done")
       } catch (err: any) {
+        jobsInProgress.delete(schedDoc.id)
         console.error("[Scheduler] ❌ " + schedDoc.id + ":", err.message)
         await schedDoc.ref.update({
-          _running:   false,
           _lastError: err.message,
           updatedAt:  Date.now(),
         })
@@ -195,7 +140,10 @@ async function checkAndRunSchedules(): Promise<void> {
   }
 }
 
-setInterval(checkAndRunSchedules, 60_000)
+// Track jobs đang chạy trong memory để tránh double-submit
+const jobsInProgress = new Set<string>()
+
+setInterval(checkAndRunSchedules, 120_000)
 checkAndRunSchedules()
 
 // ══════════════════════════════════════════════════════════
