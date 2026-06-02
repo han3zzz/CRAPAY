@@ -170,6 +170,13 @@ app.get("/ping", (req, res) => {
   console.log("pingg")
 })
 
+// Frontend gọi endpoint này để lấy relayer address
+app.get("/config", (req, res) => {
+  res.json({
+    relayerAddress: relayerWallet?.address ?? null,
+  })
+})
+
 app.post("/nonce", (req, res) => {
   const { address } = req.body
   const nonce = Math.floor(Math.random() * 1000000)
