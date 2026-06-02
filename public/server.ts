@@ -117,6 +117,37 @@ async function checkAndRunSchedules(): Promise<void> {
           updatedAt:  ts,
         })
 
+        // Lưu vào users/{address}/history để frontend load được
+        const historyId = String(ts)
+        await userRef.collection("history").doc(historyId).set({
+          id:           historyId,
+          hash:         txHash,
+          from:         ownerAddress,
+          to:           sched.to,
+          amount:       sched.amount,
+          token:        sched.token ?? "USDC",
+          type:         "sent",
+          msg:          sched.msg ? `${sched.msg} — Scheduled` : `Scheduled ${sched.freq ?? "once"} payment`,
+          ts,
+          ownerAddress,
+          updatedAt:    ts,
+        })
+
+        // Đồng thời lưu vào top-level transactions để xem tổng quan
+        await adminDb.collection("transactions").add({
+          hash:         txHash,
+          from:         ownerAddress,
+          to:           sched.to,
+          amount:       sched.amount,
+          token:        sched.token ?? "USDC",
+          type:         "sent",
+          msg:          sched.msg ? `${sched.msg} — Scheduled` : `Scheduled ${sched.freq ?? "once"} payment`,
+          ts,
+          ownerAddress,
+          createdAt:    ts,
+        })
+
+        // Lưu notification
         await userRef.collection("notifications").add({
           text: `⚡ Scheduled: sent ${sched.amount} ${sched.token ?? "USDC"} to ${String(sched.to).slice(0,6)}…${String(sched.to).slice(-4)}`,
           time: ts,
