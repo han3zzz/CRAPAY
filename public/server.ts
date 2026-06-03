@@ -197,8 +197,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"))
 })
 
-app.get("/ping", (req, res) => {
-  console.log("pingg")
+app.get("/ping", (_req, res) => {
+  res.json({ ok: true, ts: Date.now() })
 })
 
 // Frontend gọi endpoint này để lấy relayer address
