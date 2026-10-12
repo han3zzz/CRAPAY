@@ -42,8 +42,6 @@ if (relayerWallet) {
 }
 
 // ── Core: transferFrom USDC từ ví user sang recipient ────
-// User approve relayer address (RELAYER_ADDRESS) khi tạo schedule
-// Relayer gọi transferFrom → pull USDC thẳng, không qua escrow
 async function runScheduleJob(sched: any, ownerAddress: string): Promise<string> {
   if (!relayerWallet) throw new Error("Relayer wallet not configured")
 
